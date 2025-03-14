@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+</head>
+<body>
+    <div id="sketch-holder"></div>
+    <div id="controls"></div>
+
+<script>
+let block1, block2;
+let slider1, slider2;
+let collisions = 0;
+let digitsOfPi = 0;
+let velocity1 = 0;
+let velocity2 = -1;
+let angles = []; // For circular graph
+
+function setup() {
+    let canvas = createCanvas(800, 600);
+    canvas.parent('sketch-holder');
+    
+    // Create blocks
+    block1 = {
+        x: 100,
+        m: 1, // mass of 1
+        v: velocity1
+    };
+    
+    block2 = {
+        x: 200,
+        m: 100, // mass of 100 (10^2 for 3 digits of pi)
+        v: velocity2
+    };
+    
+    // Create sliders
+    slider1 = createSlider(50, 300, 100);
+    slider1.position(20, 450);
+    slider1.parent('controls');
+    
+    slider2 = createSlider(150, 400, 200);
+    slider2.position(20, 480);
+    slider2.parent('controls');
+    
+    createP('Block 1 Position').position(160, 430).parent('controls');
+    createP('Block 2 Position').position(160, 460).parent('controls');
+}
+
+function draw() {
+    background(220);
+    
+    // Update positions from sliders
+    if (!isColliding()) {
+        block1.x = slider1.value();
+        block2.x = slider2.value();
+    }
+    
+    // Draw blocks
+    fill(150, 100, 200);
+    rect(block1.x, height-100, 50, 50);
+    fill(200, 100, 150);
+    rect(block2.x, height-100, 70, 70);
+    
+    // Update positions
+    block1.x += block1.v;
+    block2.x += block2.v;
+    
+    // Wall collision
+    if (block1.x <= 0) {
+        block1.v = -block1.v;
+        collisions++;
+        angles.push(collisions * PI/180); // For circular graph
+    }
+    
+    // Block collision
+    if (block2.x <= block1.x + 50) {
+        let v1 = block1.v;
+        let v2 = block2.v;
+        
+        // Elastic collision formulas
+        block1.v = ((block1.m - block2.m) * v1 + 2 * block2.m * v2) / (block1.m + block2.m);
+        block2.v = ((block2.m - block1.m) * v2 + 2 * block1.m * v1) / (block1.m + block2.m);
+        
+        collisions++;
+        angles.push(collisions * PI/180);
+    }
+    
+    // Draw circular graph
+    push();
+    translate(width-200, height/2);
+    stroke(0);
+    noFill();
+    ellipse(0, 0, 150, 150);
+    
+    // Plot collision points around circle
+    stroke(255, 0, 0);
+    for (let angle of angles) {
+        let x = 75 * cos(angle);
+        let y = 75 * sin(angle);
+        point(x, y);
+    }
+    pop();
+    
+    // Display info
+    textSize(16);
+    fill(0);
+    text(`Collisions: ${collisions}`, 20, 20);
+    text(`Approximating π through collisions`, 20, 40);
+}
+
+function isColliding() {
+    return block2.x <= block1.x + 50;
+}
+</script>
+</body>
+</html>
